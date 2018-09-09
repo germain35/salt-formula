@@ -11,23 +11,57 @@ pygit2-git:
 {% endif %}
 
 {% if pygit2_settings.install_from_source %}
-{% set libgit2_settings = pygit2_settings.libgit2 %}
 
-{% if libgit2_settings.install_from_source %}
-{% set libgit2_src_dir = libgit2_settings.build_parent_dir + 'libgit2-' + libgit2_settings.version %}
-{% set libgit2_build_dir = libgit2_src_dir + '/_build' %}
+  {% set libssh2_settings = pygit2_settings.libssh2 %}
+  {% set libgit2_settings = pygit2_settings.libgit2 %}
+
+  {% if libgit2_settings.install_from_source %}
 
 # we probably don't have a package or it's not a high enough version
 # install latest from source/pip
-pygit-deps:
+pygit2-deps:
   pkg.installed:
-    - pkgs:
-      - build-essential
-      - pkg-config
-      - python-dev
-      - libssh-dev
-      - libffi-dev
-      - cmake
+    - pkgs: {{ pygit2_settings.dep_pkgs }}
+
+    {% set libgit2_src_dir   = libgit2_settings.build_parent_dir + 'libgit2-' + libgit2_settings.version %}
+    {% set libgit2_build_dir = libgit2_src_dir + '/_build' %}
+
+    {% if libssh2_settings.install_from_source %}
+      {% set libssh2_src_dir   = libssh2_settings.build_parent_dir + 'libssh2-' + libssh2_settings.version %}
+      {% set libssh2_build_dir = libssh2_src_dir + '/_build' %}
+dl-libssh2-src:
+  archive.extracted:
+    - name: {{ libssh2_settings.build_parent_dir }}
+    - source: https://github.com/libssh2/libssh2/releases/download/libssh2-{{ libssh2_settings.version }}/libssh2-{{ libssh2_settings.version }}.tar.gz
+    - source_hash: md5={{ libssh2_settings.download_hash }}
+    - archive_format: tar
+    - keep: True
+    - if_missing: /usr/src/libssh2-{{ libssh2_settings.version }}
+
+{{ libssh2_build_dir }}:
+  file.directory
+
+configure-libssh2:
+  cmd.run:
+    - name: cmake ..
+    - cwd: {{ libssh2_build_dir }}
+    - creates: {{ libssh2_build_dir }}/Makefile
+
+build-libssh2:
+  cmd.run:
+    - name: make -j4
+    - cwd: {{ libssh2_build_dir }}
+    - creates: {{ libssh2_build_dir }}/libssh2.so
+
+install-libssh2:
+  cmd.run:
+    - name: make install
+    - cwd: {{ libssh2_build_dir }}
+    - creates: /usr/local/lib/libssh2.so
+    - watch_in:
+      - cmd: run-ldconfig-after-lib-install
+
+    {% endif %}
 
 dl-libgit2-src:
   archive.extracted:
@@ -58,25 +92,26 @@ install-libgit2:
     - name: make install
     - cwd: {{ libgit2_build_dir }}
     - creates: /usr/local/lib/libgit2.so
+    - watch_in:
+      - cmd: run-ldconfig-after-lib-install
 
 run-ldconfig-after-lib-install:
-  cmd.run:
+  cmd.wait:
     - name: ldconfig
-    - onchanges:
-      - cmd: install-libgit2
 
-{% else %}
+  {% else %}
 {{ salt_settings.libgit2 }}:
   pkg.installed
 
-{% endif %}
+  {% endif %}
 
 install-pygit2:
   pip.installed:
     - name: pygit2 == {{ pygit2_settings.version }}
+    - require:
+      - pkg: pygit2-deps
 
 {% else %}
 {{ salt_settings.pygit2 }}:
   pkg.installed
-
 {% endif %}

@@ -43,39 +43,97 @@ that differ from whats in defaults.yaml
 {% set salt_release = salt['pillar.get']('salt:release', 'latest') %}
 {% set os_family_map = salt['grains.filter_by']({
     'Debian':  {
-      'pkgrepo': 'deb http://repo.saltstack.com/apt/' +
+      'pkgrepo': salt['grains.filter_by']({
+          '2': 'deb http://repo.saltstack.com/apt/' +
       salt['grains.get']('os')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/amd64/' + salt_release + ' ' + salt['grains.get']('oscodename') + ' main',
-      'key_url': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/amd64/' + salt_release  + '/SALTSTACK-GPG-KEY.pub',
-      'libgit2': 'libgit2-22',
-      'pyinotify': 'python-pyinotify',
+          '3': 'deb http://repo.saltstack.com/py3/' +
+      salt['grains.get']('os')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/amd64/' + salt_release + ' ' + salt['grains.get']('oscodename') + ' main',
+          'default': 'deb http://repo.saltstack.com/apt/' +
+      salt['grains.get']('os')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/amd64/' + salt_release + ' ' + salt['grains.get']('oscodename') + ' main'
+      }, grain="pythonversion"),
+      'key_url': salt['grains.filter_by']({
+          '2': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/amd64/' + salt_release  + '/SALTSTACK-GPG-KEY.pub',
+          '3': 'https://repo.saltstack.com/py3/' + salt['grains.get']('os')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/amd64/' + salt_release  + '/SALTSTACK-GPG-KEY.pub',
+          'default': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/amd64/' + salt_release  + '/SALTSTACK-GPG-KEY.pub',
+      }, grain="pythonversion"),
+      'libgit2': 'libgit2-24',
+      'pyinotify': salt['grains.filter_by']({
+        '3': 'python3-pyinotify',
+        'default': 'python-pyinotify',
+      }, grain="pythonversion"),
+      'pygit2': salt['grains.filter_by']({
+        '3': 'python3-pygit2',
+        'default': 'python-pygit2',
+      }, grain="pythonversion"),
       'gitfs': {
         'pygit2': {
+          'dep_pkgs': salt['grains.filter_by']({
+            '3': ['build-essential', 'pkg-config', 'python3-dev', 'python3-pip', 'python3-setuptools', 'libssh-dev', 'libssh2-1-dev', 'libffi-dev', 'libgit2-dev', 'cmake'],
+            'default': ['build-essential', 'pkg-config', 'python-dev', 'python-pip', 'python-setuptools', 'libssh-dev', 'libssh2-1-dev', 'libffi-dev', 'libgit2-dev', 'cmake'],
+          }, grain="pythonversion"),
           'install_from_source': True,
-          'version': '0.22.1',
+          'version': '0.27.1',
           'git': {
             'require_state': False,
             'install_from_package': 'git',
           },
           'libgit2': {
+            'install_from_source': True,
+            'build_parent_dir': '/usr/src/',
+            'version': '0.27.2',
+            'download_hash': '0e5e671aec643486a73df256a4af1d3e',
+          },
+          'libssh2': {
             'install_from_source': False,
+            'build_parent_dir': '/usr/src/',
+            'version': '1.8.0',
+            'download_hash': '3d1147cae66e2959ea5441b183de1b1c',
           },
         },
       },
     },
     'RedHat':  {
-      'pkgrepo': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release,
-      'key_url': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+      'pkgrepo': salt['grains.filter_by']({
+          '2': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release,
+          '3': 'https://repo.saltstack.com/py3/redhat/$releasever/$basearch/' + salt_release,
+          'default': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release,
+      }, grain="pythonversion"),
+      'key_url': salt['grains.filter_by']({
+          '2': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          '3': 'https://repo.saltstack.com/py3/redhat/$releasever/$basearch/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          'default': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+      }, grain="pythonversion"),  
       'pygit2': salt['grains.filter_by']({
-        'Fedora': 'python2-pygit2',
+        '3': 'python3-pygit2',
         'default': 'python-pygit2',
-      }, grain='os'),
+      }, grain="pythonversion"),
       'python_git': 'GitPython',
       'gitfs': {
-        'pygit2': {
+        'gitpython': {
           'install_from_source': False,
+        },
+        'pygit2': {
+          'dep_pkgs': salt['grains.filter_by']({
+            '3': ['python3-devel', 'python3-pip', 'python3-setuptools', 'libssh-devel', 'libssh2-devel', 'libffi-devel', 'libgit2-devel', 'cmake', 'make'],
+            'default': ['python-devel', 'python-pip', 'python-setuptools', 'libssh-devel', 'libssh2-devel', 'libffi-devel', 'libgit2-devel', 'cmake', 'make'],
+          }, grain="pythonversion"),
+          'install_from_source': True,
+          'version': '0.27.1',
           'git': {
             'require_state': False,
             'install_from_package': 'git',
+          },
+          'libgit2': {
+            'install_from_source': True,
+            'build_parent_dir': '/usr/src/',
+            'version': '0.27.2',
+            'download_hash': '0e5e671aec643486a73df256a4af1d3e',
+          },
+          'libssh2': {
+            'install_from_source': False,
+            'build_parent_dir': '/usr/src/',
+            'version': '1.8.0',
+            'download_hash': '3d1147cae66e2959ea5441b183de1b1c',
           },
         },
       },
@@ -162,16 +220,26 @@ that differ from whats in defaults.yaml
     },
     'MacOS': {
       'salt_minion': 'com.saltstack.salt',
-      'salt_minion_pkg_source': 'https://repo.saltstack.com/osx/salt-' + salt_release + '-py2-x86_64.pkg',
+      'salt_minion_pkg_source': '',
       'salt_minion_pkg_hash': '',
       'config_path': '/private/etc/salt',
       'minion_service': 'com.saltstack.salt.minion',
     },
   }, merge=salt['grains.filter_by']({
     'Ubuntu':  {
-      'pkgrepo': 'deb http://repo.saltstack.com/apt/' +
+      'pkgrepo': salt['grains.filter_by']({
+          '2': 'deb http://repo.saltstack.com/apt/' +
       salt['grains.get']('os')|lower + '/' + osrelease + '/amd64/' + salt_release  + ' ' + salt['grains.get']('oscodename') + ' main',
-      'key_url': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os')|lower + '/' + osrelease + '/amd64/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          '3': 'deb http://repo.saltstack.com/py3/' +
+      salt['grains.get']('os')|lower + '/' + osrelease + '/amd64/' + salt_release  + ' ' + salt['grains.get']('oscodename') + ' main',
+          'default': 'deb http://repo.saltstack.com/apt/' +
+      salt['grains.get']('os')|lower + '/' + osrelease + '/amd64/' + salt_release  + ' ' + salt['grains.get']('oscodename') + ' main',
+      }, grain="pythonversion"),
+      'key_url': salt['grains.filter_by']({
+          '2': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os')|lower + '/' + osrelease + '/amd64/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          '3': 'https://repo.saltstack.com/py3/' + salt['grains.get']('os')|lower + '/' + osrelease + '/amd64/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          'default': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os')|lower + '/' + osrelease + '/amd64/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+      }, grain="pythonversion"),
       'pygit2': 'python-pygit2',
       'gitfs': {
         'pygit2': {
@@ -184,9 +252,19 @@ that differ from whats in defaults.yaml
       },
     },
     'Raspbian': {
-      'pkgrepo': 'deb http://repo.saltstack.com/apt/' +
+      'pkgrepo': salt['grains.filter_by']({
+          '2': 'deb http://repo.saltstack.com/apt/' +
       salt['grains.get']('os_family')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/armhf/' + salt_release + ' ' + salt['grains.get']('oscodename') + ' main',
-      'key_url': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os_family')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/armhf/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          '3': 'deb http://repo.saltstack.com/py3/' +
+      salt['grains.get']('os_family')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/armhf/' + salt_release + ' ' + salt['grains.get']('oscodename') + ' main',
+          'default': 'deb http://repo.saltstack.com/apt/' +
+      salt['grains.get']('os_family')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/armhf/' + salt_release + ' ' + salt['grains.get']('oscodename') + ' main',
+      }, grain="pythonversion"),
+      'key_url': salt['grains.filter_by']({
+          '2': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os_family')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/armhf/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          '3': 'https://repo.saltstack.com/py3/' + salt['grains.get']('os_family')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/armhf/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+          'default': 'https://repo.saltstack.com/apt/' + salt['grains.get']('os_family')|lower + '/' + salt['grains.get']('osmajorrelease', osrelease)|string + '/armhf/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
+      }, grain="pythonversion"),
     },
     'SmartOS': {
       'salt_master': 'salt',

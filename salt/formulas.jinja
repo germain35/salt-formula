@@ -5,20 +5,22 @@
     'options': {},
    }
 %}
+
 {% set formulas = salt['pillar.get']('salt_formulas:list', {}) %}
 
-{%- macro formulas_git_opt(env, opt) -%}
+{%- macro formulas_opt(env, opt) -%}
 {%- set value = salt['pillar.get']('salt_formulas:git_opts:{0}:{1}'.format(env, opt),
      salt['pillar.get']('salt_formulas:git_opts:default:{0}'.format(opt),
-       defaults[opt])) -%}
+     salt['pillar.get']('salt_formulas:opts:default:{0}'.format(opt),
+       defaults[opt]))) -%}
 {{ value|yaml }}
 {%- endmacro -%}
 
 {%- macro formulas_roots(env) -%}
-{%- set value = [] -%}
+{%- set value   = [] -%}
+{%- set basedir = formulas_opt(env, 'basedir')|load_yaml -%}
 {%- for dir in formulas.get(env, []) -%}
-{%- set basedir = formulas_git_opt(env, 'basedir')|load_yaml -%}
-{%- do value.append('{0}/{1}'.format(basedir, dir)) -%}
+{%- do value.append('{0}/{1}'.format(basedir, dir.name)) -%}
 {%- endfor -%}
 {{ value|yaml }}
 {%- endmacro -%}

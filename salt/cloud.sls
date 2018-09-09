@@ -1,20 +1,18 @@
 {% from "salt/map.jinja" import salt_settings with context %}
 
-{%- if salt_settings.use_pip %}
-python-pip:
-  pkg.installed
+salt-cloud-python-pip:
+  pkg.installed:
+    - name: python-pip
 
 salt-cloud-pip-packages:
   pip.installed:
     - pkgs:
       - apache-libcloud
-      {%- if grains['os_family'] not in ['Debian', 'RedHat'] %}
-      - crypto
-      {%- endif %}
       - pycrypto
+      - ipy
+      - requests
     - require:
-      - pkg: python-pip
-{%- endif %}
+      - pkg: salt-cloud-python-pip
 
 {% if salt_settings.install_packages %}
 salt-cloud:
@@ -23,10 +21,8 @@ salt-cloud:
     {%- if salt_settings.version is defined %}
     - version: {{ salt_settings.version }}
     {%- endif %}
-    {%- if salt_settings.use_pip %}
     - require:
       - pip: salt-cloud-pip-packages
-    {%- endif %}
 {% endif %}
 
 {% for cert in pillar.get('salt_cloud_certs', {}) %}
@@ -51,17 +47,16 @@ cloud-cert-{{ cert }}-pem:
 {% endfor %}
 {% endfor %}
 
-{% for cloud_section in ["maps", "profiles", "providers"] %}
+{% for cloud_section in ["conf", "deploy", "maps", "profiles", "providers"] %}
 salt-cloud-{{ cloud_section }}:
-  file.recurse:
+  file.directory:
     - name: {{ salt_settings.config_path }}/cloud.{{ cloud_section }}.d
-    - source: {{ salt_settings.cloud.template_sources[cloud_section] }}
-    - template: jinja
-    - makedirs: True
-    - exclude_pat: _*
+    - user: root
+    - group: root
+    - mode: 755
 
 {% for filename in salt['pillar.get']("salt:cloud:" ~ cloud_section, {}).keys() %}
-/etc/salt/cloud.{{ cloud_section }}.d/{{ filename }}:
+/etc/salt/cloud.{{ cloud_section }}.d/{{ filename }}.conf:
   file.serialize:
     - dataset_pillar: salt:cloud:{{ cloud_section }}:{{ filename }}
     - formatter: yaml
