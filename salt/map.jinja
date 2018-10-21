@@ -72,7 +72,7 @@ that differ from whats in defaults.yaml
             'default': ['build-essential', 'pkg-config', 'python-dev', 'python-pip', 'python-setuptools', 'libssh-dev', 'libssh2-1-dev', 'libffi-dev', 'libgit2-dev', 'cmake'],
           }, grain="pythonversion"),
           'install_from_source': True,
-          'version': '0.27.1',
+          'version': '0.27.2',
           'git': {
             'require_state': False,
             'install_from_package': 'git',
@@ -80,8 +80,8 @@ that differ from whats in defaults.yaml
           'libgit2': {
             'install_from_source': True,
             'build_parent_dir': '/usr/src/',
-            'version': '0.27.2',
-            'download_hash': '0e5e671aec643486a73df256a4af1d3e',
+            'version': '0.27.5',
+            'download_hash': 'db082b0fa83c09d8c5d87ab2654a7159',
           },
           'libssh2': {
             'install_from_source': False,
@@ -102,7 +102,7 @@ that differ from whats in defaults.yaml
           '2': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
           '3': 'https://repo.saltstack.com/py3/redhat/$releasever/$basearch/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
           'default': 'https://repo.saltstack.com/yum/redhat/$releasever/$basearch/' + salt_release + '/SALTSTACK-GPG-KEY.pub',
-      }, grain="pythonversion"),  
+      }, grain="pythonversion"),
       'pygit2': salt['grains.filter_by']({
         '3': 'python3-pygit2',
         'default': 'python-pygit2',
@@ -118,7 +118,7 @@ that differ from whats in defaults.yaml
             'default': ['python-devel', 'python-pip', 'python-setuptools', 'libssh-devel', 'libssh2-devel', 'libffi-devel', 'libgit2-devel', 'cmake', 'make'],
           }, grain="pythonversion"),
           'install_from_source': True,
-          'version': '0.27.1',
+          'version': '0.27.2',
           'git': {
             'require_state': False,
             'install_from_package': 'git',
@@ -126,8 +126,8 @@ that differ from whats in defaults.yaml
           'libgit2': {
             'install_from_source': True,
             'build_parent_dir': '/usr/src/',
-            'version': '0.27.2',
-            'download_hash': '0e5e671aec643486a73df256a4af1d3e',
+            'version': '0.27.5',
+            'download_hash': 'db082b0fa83c09d8c5d87ab2654a7159',
           },
           'libssh2': {
             'install_from_source': False,
